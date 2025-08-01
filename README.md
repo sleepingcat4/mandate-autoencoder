@@ -27,3 +27,16 @@ python inference.py
 
 #### Trained model
 We also provide our trained models in the model folder called **autoencoder.pth**
+
+## Upcoming Autoencoder Enhancements
+
+- [ ] Include Sparse Autoencoder
+- [ ] Include Variational Autoencoder (VAE)
+- [ ] Include Convolutional Autoencoder
+- [ ] Refactor into high-level wrapper / framework
+- [ ] Increase architectural difficulty and depth
+- [ ] Add multi-GPU training support
+- [ ] Extend to Denoising Autoencoder
+- [ ] Add segmentation capabilities
+- [ ] Support text input (e.g., embeddings)
+- [ ] Support video input (e.g., 3D Conv or CNN+RNN)
