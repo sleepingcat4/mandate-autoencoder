@@ -1,36 +1,29 @@
-from imports import *
-from model import AutoEncoder
-from dataset import mnist_dataset
 from einops import rearrange
-import os
+import torch
 
-loader = mnist_dataset(batch_size=32)
-model = AutoEncoder()
-loss_function = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-8)
+def train_model(model, loader, loss_fn, optimizer, epochs, device):
+    model.to(device)
+    model.train()
+    losses = []
 
-epochs = 20
-outputs = []
-losses = []
+    for epoch in range(epochs):
+        epoch_loss = 0
+        for images, _ in loader:
+            images = rearrange(images, 'b c h w -> b (c h w)').to(device)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
+            output = model(images)
+            loss = loss_fn(output, images)
 
-for epoch in range(epochs):
-    for images, _ in loader:
-        images = rearrange(images, 'b c h w -> b (c h w)').to(device)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-        reconstructed = model(images)
-        loss = loss_function(reconstructed, images)
+            losses.append(loss.item())
+            epoch_loss += loss.item()
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss/len(loader):.6f}")
 
-        losses.append(loss.item())
+    torch.save(model.state_dict(), f"{model.__class__.__name__}.pth")
+    print(f"Model saved as {model.__class__.__name__}.pth")
 
-    outputs.append((epoch, images, reconstructed))
-    print(f"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.6f}")
-
-torch.save(model.state_dict(), "autoencoder.pth")
-print("Model saved as autoencoder.pth")
+    return losses

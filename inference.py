@@ -1,26 +1,31 @@
-from imports import *
-from model import AutoEncoder
-from dataset import mnist_dataset
+import torch
 import matplotlib.pyplot as plt
+from einops import rearrange
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def load_model(model_class, model_path, device, **model_kwargs):
+    model = model_class(**model_kwargs).to(device)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.eval()
+    return model
 
-model = AutoEncoder().to(device)
-model.load_state_dict(torch.load("autoencoder.pth", map_location=device))
-model.eval()
+def infer_and_visualize(model, loader, device, num_images=10):
+    dataiter = iter(loader)
+    images, _ = next(dataiter)
+    images = images.view(images.size(0), -1).to(device)
 
-loader = mnist_dataset(batch_size=32, train=False)
-dataiter = iter(loader)
-images, _ = next(dataiter)
+    with torch.no_grad():
+        reconstructed = model(images)
 
-images = images.view(-1, 28 * 28).to(device)
-with torch.no_grad():
-    reconstructed = model(images)
+    images = images.view(-1, 1, 28, 28).cpu()
+    reconstructed = reconstructed.view(-1, 1, 28, 28).cpu()
 
-fig, axes = plt.subplots(nrows=2, ncols=10, figsize=(10, 3))
-for i in range(10):
-    axes[0, i].imshow(images[i].cpu().reshape(28, 28), cmap='gray')
-    axes[0, i].axis('off')
-    axes[1, i].imshow(reconstructed[i].cpu().reshape(28, 28), cmap='gray')
-    axes[1, i].axis('off')
-plt.show()
+    fig, axes = plt.subplots(2, num_images, figsize=(num_images*1.5, 3))
+    for i in range(num_images):
+        axes[0, i].imshow(images[i].squeeze(), cmap='gray')
+        axes[0, i].axis('off')
+        axes[1, i].imshow(reconstructed[i].squeeze(), cmap='gray')
+        axes[1, i].axis('off')
+    axes[0, 0].set_ylabel('Input')
+    axes[1, 0].set_ylabel('Reconstructed')
+    plt.tight_layout()
+    plt.show()
