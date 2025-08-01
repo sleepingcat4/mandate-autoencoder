@@ -30,7 +30,7 @@ We also provide our trained models in the model folder called **autoencoder.pth*
 
 ## Upcoming Autoencoder Enhancements
 
-- [ ] Include Sparse Autoencoder
+- [x] Include Sparse Autoencoder
 - [ ] Include Variational Autoencoder (VAE)
 - [ ] Include Convolutional Autoencoder
 - [ ] Refactor into high-level wrapper / framework
@@ -40,3 +40,4 @@ We also provide our trained models in the model folder called **autoencoder.pth*
 - [ ] Add segmentation capabilities
 - [ ] Support text input (e.g., embeddings)
 - [ ] Support video input (e.g., 3D Conv or CNN+RNN)
+
