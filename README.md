@@ -9,7 +9,7 @@ Linear or original Dense network based autoencoder is the primary autoencoder wh
 ##### How to use it?
 Download this repo and go inside it. Then 
 
-```
+```Python 
 from model import AutoEncoder, Sparse_Autoencoder
 from dataset import mnist_dataset
 from torch import nn, optim
@@ -34,7 +34,7 @@ train_model(model, loader, loss_fn, optimizer, epochs, device)
 ```
 
 Perform inference 
-```
+```Python
 from model import AutoEncoder, Sparse_Autoencoder
 from dataset import mnist_dataset
 from inference import load_model, infer_and_visualize
