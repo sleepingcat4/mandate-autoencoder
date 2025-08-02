@@ -1,7 +1,7 @@
 from einops import rearrange
 import torch
 
-def train_model(model, loader, loss_fn, optimizer, epochs, device):
+def train_model(model, loader, loss_fn, optimizer, epochs, device,flatten=True):
     model.to(device)
     model.train()
     losses = []
@@ -9,8 +9,9 @@ def train_model(model, loader, loss_fn, optimizer, epochs, device):
     for epoch in range(epochs):
         epoch_loss = 0
         for images, _ in loader:
-            images = rearrange(images, 'b c h w -> b (c h w)').to(device)
-
+            images = images.to(device)
+            if flatten:
+                images = rearrange(images,'b c h w -> b (c h w)')
             output = model(images)
             loss = loss_fn(output, images)
 

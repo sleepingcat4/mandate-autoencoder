@@ -55,4 +55,28 @@ class Sparse_Autoencoder(nn.Module):
         kl_div = torch.sum(kl)
         return mse_loss + self.lambda_sparse * kl_div
 
+class Conv_Autoencoder(nn.Module):
+    def __init__(self,input_channels=1,latent_dim=64):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(input_channels, 16,kernel_size=3,stride=2,padding=1),
+            nn.ReLU(),
+            nn.Conv2d(16,32,kernel_size=3,stride=2,padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32,latent_dim,kernel_size=7),
+            nn.ReLU()
+        )
+        self.decoder = nn.Sequential(
+           nn.ConvTranspose2d(latent_dim,32,kernel_size=7),
+           nn.ReLU(),
+           nn.ConvTranspose2d(32,16,kernel_size=3,stride=2,padding=1,output_padding=1),
+           nn.ReLU(),
+           nn.ConvTranspose2d(16,input_channels,kernel_size=3,stride=2,padding=1,output_padding=1),
+           nn.Sigmoid()
+        )
+    def forward(self,x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+        
         
