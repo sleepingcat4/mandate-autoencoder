@@ -10,9 +10,12 @@ def train_model(model, loader, loss_fn, optimizer, epochs, device):
         epoch_loss = 0
         for images, _ in loader:
             images = rearrange(images, 'b c h w -> b (c h w)').to(device)
-
-            output = model(images)
-            loss = loss_fn(output, images)
+            if hasattr(model,'reparameterize'):
+                output, mu,log_var = model(images)
+                loss = loss_fn(output,images,mu,log_var)
+            else:
+                output = model(images)
+                loss = loss_fn(output, images)
 
             optimizer.zero_grad()
             loss.backward()
