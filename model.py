@@ -87,3 +87,48 @@ class Conv_Autoencoder(nn.Module):
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return decoded
+class VAE(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+        self.encoder_shared = nn.Sequential(
+            nn.Linear(input_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 36),
+            nn.ReLU(),
+            nn.Linear(36, 18),
+            nn.ReLU()
+        )
+        self.fc_mu = nn.Linear(18, latent_dim)    
+        self.fc_var = nn.Linear(18, latent_dim)  
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, 18),
+            nn.ReLU(),
+            nn.Linear(18, 36),
+            nn.ReLU(),
+            nn.Linear(36, 64),
+            nn.ReLU(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, input_dim),
+            nn.Sigmoid()
+        )
+
+    def encode(self, x):
+        h = self.encoder_shared(x)
+        return self.fc_mu(h), self.fc_var(h)
+
+    def reparameterize(self, mu, log_var):
+        std = torch.exp(0.5 * log_var)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+
+    def forward(self, x):
+        mu, log_var = self.encode(x)
+        z = self.reparameterize(mu, log_var)
+        reconstructed = self.decoder(z)
+        if self.training:
+            return reconstructed, mu,log_var
+        else:
+            return reconstructed
