@@ -68,3 +68,99 @@ def vqemaautoencoder_train(model, training_loader, data_variance, num_training_u
 
     torch.save(model.state_dict(), "vqema_autoencoder.pth")
     return train_res_recon_error, train_res_perplexity
+
+def train_conv_autoencoder(model, loader, loss_fn, optimizer, epochs, device):
+    """
+    Specialized training function for Conv_Autoencoder model.
+    Handles the flattened input format required by Conv_Autoencoder.
+    
+    Args:
+        model: Conv_Autoencoder instance
+        loader: DataLoader providing batches of (images, labels)
+        loss_fn: Loss function (e.g., nn.MSELoss())
+        optimizer: Optimizer instance
+        epochs: Number of training epochs
+        device: Target device ('cpu' or 'cuda')
+        
+    Returns:
+        List of loss values recorded during training
+    """
+    model.to(device)
+    model.train()
+    losses = []
+
+    for epoch in range(epochs):
+        epoch_loss = 0
+        for images, _ in loader:
+            # Conv_Autoencoder expects flattened input (batch_size, input_dim)
+            images = images.view(images.size(0), -1).to(device)
+            
+            # Forward pass
+            output = model(images)
+            loss = loss_fn(output, images)
+
+            # Backward pass
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            # Record loss
+            losses.append(loss.item())
+            epoch_loss += loss.item()
+
+        print(f"ConvAE Epoch {epoch+1}/{epochs}, Loss: {epoch_loss/len(loader):.6f}")
+
+    # Save trained model
+    torch.save(model.state_dict(), f"conv_autoencoder.pth")
+    print(f"ConvAutoencoder saved as conv_autoencoder.pth")
+    return losses
+
+def train_vae(model, loader, optimizer, epochs, device):
+    """
+    Training function for Variational Autoencoder (VAE) model.
+    Tracks and reports both total loss and its components (BCE + KLD).
+    
+    Args:
+        model: VAE model instance
+        loader: DataLoader providing batches of (images, labels)
+        optimizer: Optimizer instance (e.g., Adam)
+        epochs: Number of training epochs
+        device: Target device ('cpu' or 'cuda')
+        
+    Returns:
+        Trained model instance
+    """
+    model.train()
+    
+    for epoch in range(epochs):
+        epoch_loss = 0# Track total loss
+        epoch_bce = 0 # Track reconstruction loss component
+        epoch_kld = 0# Track KL divergence component
+        
+        for images, _ in loader:# Ignore labels for unsupervised learning
+            images = images.to(device)
+            recon, mu, log_var = model(images, epoch=epoch)# Forward pass - returns reconstruction, mean and log variance
+            
+            loss = model.loss_function(recon, images, mu, log_var) # Compute loss using VAE's custom loss function
+            # Backward pass and optimization
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            # Calculate and record loss components for monitoring
+            with torch.no_grad():# No need for gradients during evaluation
+                bce = F.binary_cross_entropy(recon, images, reduction='sum') # Binary Cross Entropy (reconstruction loss)
+                kld = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())# KL Divergence (latent space regularization)
+                epoch_loss += loss.item() * images.size(0)# Accumulate losses (multiply by batch size for proper averaging)
+                epoch_bce += bce.item()
+                epoch_kld += kld.item()
+        
+        # Calculate epoch averages and print progress
+        avg_loss = epoch_loss / len(loader.dataset)
+        print(f'Epoch {epoch+1:02d} | Loss: {avg_loss:.4f} | '
+              f'BCE: {epoch_bce/len(loader.dataset):.4f} | '
+              f'KLD: {epoch_kld/len(loader.dataset):.4f}')
+    
+    # Save final model after training completes
+    torch.save(model.state_dict(), "vae.pth")
+    print("Model saved as vae.pth")
+    return model
