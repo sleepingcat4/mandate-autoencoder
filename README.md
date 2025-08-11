@@ -8,6 +8,7 @@ Linear or original Dense network based autoencoder is the primary autoencoder wh
 
 ##### How to use it?
 Download this repo and go inside it. Then 
+Basic Autoencoder Usage
 
 ```Python 
 from model import AutoEncoder, Sparse_Autoencoder
@@ -51,6 +52,80 @@ model = load_model(model_class, model_path, device, **model_kwargs)
 infer_and_visualize(model, loader, device)
 
 ````
+Convolutional Autoencoder Usage
+```Python
+from model import AutoEncoder, Sparse_Autoencoder,VAE,Conv_Autoencoder
+from dataset import mnist_dataset
+from torch import nn, optim
+import torch
+from train import train_model
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+loader = mnist_dataset(batch_size=32)
+
+model = Conv_Autoencoder(input_dim=784, latent_dim=32).to(device)
+
+if isinstance(model, Sparse_Autoencoder):
+    loss_fn = model.sparse_loss
+else:
+    loss_fn = nn.MSELoss()
+
+optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-8)
+epochs = 20
+
+train_model(model, loader,loss_fn,optimizer, epochs, device)
+````
+````python
+from model import AutoEncoder, Sparse_Autoencoder,VAE,Conv_Autoencoder
+from dataset import mnist_dataset
+from inference import load_model, infer_and_visualize
+import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+loader = mnist_dataset(batch_size=32, train=False)
+
+model_class = Conv_Autoencoder
+model_path = "Conv_Autoencoder.pth"
+model_kwargs = dict(input_dim=784, latent_dim=32)
+
+model = load_model(model_class, model_path, device, **model_kwargs)
+infer_and_visualize(model, loader, device)
+````
+Variational Autoencoder (VAE) Usage
+````python
+from model import VAE
+from dataset import mnist_dataset
+from torch import nn, optim
+import torch
+from train import train_model
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+loader = mnist_dataset(batch_size=32)
+
+model = VAE(input_dim=784, latent_dim=64, beta=8.0).to(device)
+
+loss_fn = model.calculate_loss# Directly use the loss calculation method within the model
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
+epochs = 20
+train_model(model, loader, loss_fn, optimizer, epochs, device)
+````
+````python
+from model import VAE
+from dataset import mnist_dataset
+from inference import load_model, infer_and_visualize
+import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+loader = mnist_dataset(batch_size=32, train=False)
+
+model_class = VAE
+model_path = "vae.pth"
+model_kwargs = dict(input_dim=784, latent_dim=64)
+
+model = load_model(model_class, model_path, device, **model_kwargs)
+infer_and_visualize(model, loader, device)
+````
 
 #### Trained model
 We also provide our trained models in the model folder called **autoencoder.pth** and sparse_autoencoder.pth
@@ -58,8 +133,8 @@ We also provide our trained models in the model folder called **autoencoder.pth*
 ## Upcoming Autoencoder Enhancements
 
 - [x] Include Sparse Autoencoder
-- [ ] Include Variational Autoencoder (VAE)
-- [ ] Include Convolutional Autoencoder
+- [x] Include Variational Autoencoder (VAE)
+- [x] Include Convolutional Autoencoder
 - [x] Refactor into high-level wrapper / framework
 - [ ] Increase architectural difficulty and depth
 - [ ] Add multi-GPU training support
